@@ -5,14 +5,28 @@ import {
   TextInput,
   Pressable,
   KeyboardAvoidingView,
+  ActivityIndicator,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import auth from '@react-native-firebase/auth';
 import ToastComponent, {showToast, showError} from '../utils/Toast';
 
 const Login = ({navigation}: {navigation: any}) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
+
+  useEffect(() => {
+    const unsubscribe = auth().onAuthStateChanged(user => {
+      if (user) {
+        navigation.reset({
+          index: 0,
+          routes: [{name: 'Home'}],
+        });
+      }
+    });
+    return unsubscribe;
+  }, []);
 
   async function login() {
     if (!email) {
@@ -24,8 +38,10 @@ const Login = ({navigation}: {navigation: any}) => {
       return;
     }
     try {
+      setLoading(true);
       const user = await auth().signInWithEmailAndPassword(email, password);
       showToast('Logged In Successfully');
+      setLoading(false);
       navigation.reset({
         index: 0,
         routes: [{name: 'Home'}],
@@ -67,13 +83,19 @@ const Login = ({navigation}: {navigation: any}) => {
             <Text style={styles.text}> Sign Up</Text>
           </Pressable>
         </View>
-        <Pressable
-          style={styles.button}
-          onPress={() => {
-            login();
-          }}>
-          <Text style={styles.btnText}>Login</Text>
-        </Pressable>
+        {loading ? (
+          <View style={styles.button}>
+            <ActivityIndicator size="large" color="white" />
+          </View>
+        ) : (
+          <Pressable
+            style={styles.button}
+            onPress={() => {
+              login();
+            }}>
+            <Text style={styles.btnText}>Login</Text>
+          </Pressable>
+        )}
       </View>
       <ToastComponent />
     </KeyboardAvoidingView>

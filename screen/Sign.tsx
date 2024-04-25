@@ -4,17 +4,20 @@ import {
   Pressable,
   StyleSheet,
   TextInput,
+  ActivityIndicator,
   KeyboardAvoidingView,
 } from 'react-native';
 import React, {useState} from 'react';
 import auth from '@react-native-firebase/auth';
 import ToastComponent, {showToast, showError} from '../utils/Toast';
+import firestore from '@react-native-firebase/firestore';
 
 const Sign = ({navigation}: {navigation: any}) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
+  const [name, setName] = useState<string>('');
+  const [confirmPassword, setConfirmPassword] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
 
   async function register() {
     if (!name) {
@@ -38,15 +41,25 @@ const Sign = ({navigation}: {navigation: any}) => {
       return;
     }
     try {
+      setLoading(true);
       await auth().createUserWithEmailAndPassword(email, password);
       const currentUser = auth().currentUser;
       if (currentUser) {
         await currentUser.updateProfile({
           displayName: name,
         });
+        firestore().collection('Users').doc(currentUser.uid).set({
+          id: currentUser.uid,
+          name: name,
+          email: email,
+        });
       }
       showToast('User registered successfully');
-      navigation.navigate('Login');
+      setLoading(false);
+      navigation.reset({
+        index: 0,
+        routes: [{name: 'Home'}],
+      });
     } catch (error: any) {
       showError(error.message);
     }
@@ -99,13 +112,19 @@ const Sign = ({navigation}: {navigation: any}) => {
             <Text style={styles.text}> Login</Text>
           </Pressable>
         </View>
-        <Pressable
-          style={styles.button}
-          onPress={() => {
-            register();
-          }}>
-          <Text style={styles.btnText}>Sign Up</Text>
-        </Pressable>
+        {loading ? (
+          <View style={styles.button}>
+            <ActivityIndicator size="large" color="white" />
+          </View>
+        ) : (
+          <Pressable
+            style={styles.button}
+            onPress={() => {
+              register();
+            }}>
+            <Text style={styles.btnText}>Sign Up</Text>
+          </Pressable>
+        )}
       </View>
       <ToastComponent />
     </KeyboardAvoidingView>

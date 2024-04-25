@@ -7,6 +7,7 @@ import Login from '../screen/Login';
 import Sign from '../screen/Sign';
 import Animation from '../screen/Animation';
 import Profile from '../screen/Profile';
+import AddRoom from '../screen/AddRoom';
 
 const Stack = createNativeStackNavigator();
 
@@ -38,6 +39,13 @@ const AppNavigation = () => {
         <Stack.Screen
           name="Home"
           component={Home}
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="AddRoom"
+          component={AddRoom}
           options={{
             headerShown: false,
           }}
